@@ -1,14 +1,16 @@
 package com.example.yurab.player13;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
@@ -19,21 +21,22 @@ import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-public final class MainActivity extends Activity implements EventHandler,
-        MediaPlayer.OnPreparedListener, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+public final class MainActivity extends Activity implements EventHandler, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
     public ArrayList<Track> trackList = new ArrayList<>();
     private ImageButton ibPausePlay, ibForward, inPrevious;
     private TextView textView;
     private SeekBar seekBar;
-    private MediaPlayer mediaPlayer;
+    //   private MediaPlayer mediaPlayer;
     private int length;
     private AudioManager am;
     private int current;
-
+    private Intent intent;
+    private ServiceConnection sConn;
+    private PlayerService playerService;
+    private boolean bound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +44,46 @@ public final class MainActivity extends Activity implements EventHandler,
         setContentView(R.layout.activity_main);
         initialize();
         setRecyclerView();
+        bindPlayerService();
 
+
+    }
+
+    private void initService() {
+        playerService.initTrackList(trackList);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        bindService(intent, sConn, 0);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (!bound) return;
+        unbindService(sConn);
+        bound = false;
+    }
+
+
+    private void bindPlayerService() {
+        intent = new Intent(this, PlayerService.class);
+        startService(intent);
+        sConn = new ServiceConnection() {
+
+            public void onServiceConnected(ComponentName name, IBinder binder) {
+                Log.d("Yura", "MainActivity onServiceConnected");
+                playerService = ((PlayerService.MyBinder) binder).getService();
+                bound = true;
+            }
+
+            public void onServiceDisconnected(ComponentName name) {
+                Log.d("Yura", "MainActivity onServiceDisconnected");
+                bound = false;
+            }
+        };
     }
 
     private void setRecyclerView() {
@@ -51,7 +93,7 @@ public final class MainActivity extends Activity implements EventHandler,
         //Creating RecyclerView adapter and putting to it data
         //by loading sort settings from SharedPreferences
         // todo: save shared prefs
-        RvAdapter adapter = new RvAdapter(this, getTracks());
+        RvAdapter adapter = new RvAdapter(this, trackList);
 
         //setting adapter
         recyclerView.setAdapter(adapter);
@@ -79,10 +121,10 @@ public final class MainActivity extends Activity implements EventHandler,
         ibPausePlay.setOnClickListener(this);
         seekBar.setOnSeekBarChangeListener(this);
 
-        startService(new Intent(this,PlayerService.class));
+
     }
 
-    private String formatDuration(long millis) {
+    private String formatDuration(int millis) {
         return String.format("%02d:%02d ",
                 TimeUnit.MILLISECONDS.toMinutes(millis),
                 TimeUnit.MILLISECONDS.toSeconds(millis) -
@@ -118,7 +160,7 @@ public final class MainActivity extends Activity implements EventHandler,
                 int thisId = counter;
                 String thisTitle = cursor.getString(titleColumn);
                 String thisArtist = cursor.getString(artistColumn);
-                String thisDuration = formatDuration(cursor.getLong(audioDurationColumn));
+                int thisDuration = (int) cursor.getLong(audioDurationColumn);
                 String thisPath = cursor.getString(pathColumn);
                 //Creating new Track
                 Track track = new Track(thisId, thisTitle, thisArtist, thisDuration, thisPath);
@@ -133,29 +175,24 @@ public final class MainActivity extends Activity implements EventHandler,
 
     @Override
     public void play(int id) {
+        initService();
         //todo correct duration
-        textView.setText(trackList.get(id).getDuration());
-        current = id;
-        releaseMP();
-        try {//create mediaPlayer
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(trackList.get(id).getPath());
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.prepare();
-            mediaPlayer.start();
+        //setting notification title& artist
+        playerService.setSong(trackList.get(id).getTitle(), trackList.get(id).getArtist());
 
+        textView.setText(formatDuration(trackList.get(id).getDuration()));
+        current = id;
+
+        if (playerService.play(id)) {
             setBackground(ibPausePlay, ContextCompat.getDrawable(this, R.drawable.ic_pause));
-        } catch (IOException e) {
-            e.printStackTrace();
 
         }
-
     }
 
 
     private void changePlayPause() {
-        if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying()) pausePlayer();
+        if (playerService.mediaPlayer != null) {
+            if (playerService.mediaPlayer.isPlaying()) pausePlayer();
             else startPlayer();
         } else play(0);
 
@@ -164,8 +201,8 @@ public final class MainActivity extends Activity implements EventHandler,
     private void pausePlayer() {
         setBackground(ibPausePlay, ContextCompat.getDrawable(this, R.drawable.ic_play));
 
-        length = mediaPlayer.getCurrentPosition();
-        mediaPlayer.pause();
+        length = playerService.mediaPlayer.getCurrentPosition();
+        playerService.mediaPlayer.pause();
 
 
     }
@@ -173,10 +210,10 @@ public final class MainActivity extends Activity implements EventHandler,
     private void startPlayer() {
 
         setBackground(ibPausePlay, ContextCompat.getDrawable(this, R.drawable.ic_pause));
-        if (!mediaPlayer.isPlaying()) {
+        if (!playerService.mediaPlayer.isPlaying()) {
             if (length > 0) {
-                mediaPlayer.seekTo(length);
-                mediaPlayer.start();
+                playerService.mediaPlayer.seekTo(length);
+                playerService.mediaPlayer.start();
             }
 
         }
@@ -199,40 +236,32 @@ public final class MainActivity extends Activity implements EventHandler,
 
         switch (v.getId()) {
             case (R.id.ibNext_AM):
-                int next = current + 1;
-                play(next);
+
+                play(playerService.next());
                 break;
             case (R.id.ibPrevious_AM):
-                int previous = current - 1;
-                play(previous);
+
+                play(playerService.previous());
                 break;
             case (R.id.ibPausePlay_AM):
 
                 changePlayPause();
                 break;
             case (R.id.ibfastforward_AM):
-                mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + 3000);
+                playerService.mediaPlayer.seekTo(playerService.mediaPlayer.getCurrentPosition() + 3000);
                 break;
             case (R.id.ibfastrewind_AM):
-                mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - 3000);
+                playerService.mediaPlayer.seekTo(playerService.mediaPlayer.getCurrentPosition() - 3000);
                 break;
         }
     }
 
-    private void releaseMP() {
-        if (mediaPlayer != null) {
-            try {
-                mediaPlayer.release();
-                mediaPlayer = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
+        //Toast.makeText(this,progress,Toast.LENGTH_LONG).show();
+        playerService.mediaPlayer.seekTo(Integer.valueOf(trackList.get(current).getDuration()) / 100 * progress);
     }
 
     @Override
@@ -245,14 +274,16 @@ public final class MainActivity extends Activity implements EventHandler,
 
     }
 
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        mp.start();
-    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        releaseMP();
+
     }
+
+//    @Override
+//    public void onCompletion(MediaPlayer mp) {
+//
+//        textView.setText(formatDuration(trackList.get(playerService.next()).getDuration()));
+//    }
 }

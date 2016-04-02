@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 
 //RecyclerView ArrayList/DB adapter
@@ -36,6 +37,13 @@ public final class RvAdapter extends RecyclerView.Adapter<RvAdapter.myViewHolder
         return viewHolder;
     }
 
+    private String formatDuration(int millis) {
+        return String.format("%02d:%02d ",
+                TimeUnit.MILLISECONDS.toMinutes(millis),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+    }
+
     @Override
     public void onBindViewHolder(myViewHolder holder, int position) {
         //Filling ViewHolder with Persons from ArrayList
@@ -43,7 +51,7 @@ public final class RvAdapter extends RecyclerView.Adapter<RvAdapter.myViewHolder
         holder.title.setText(current.getTitle());
         holder.title.setTag(current.getId());
         holder.artist.setText(current.getArtist());
-        holder.duration.setText(current.getDuration());
+        holder.duration.setText(formatDuration(current.getDuration()));
 
         //Setting current id to cardView to use it later in Database update operation
         holder.cardView.setTag(position);
@@ -83,7 +91,6 @@ public final class RvAdapter extends RecyclerView.Adapter<RvAdapter.myViewHolder
 
             EventHandler eventHandler = (EventHandler) context;
             eventHandler.play(id);
-
 
 
         }

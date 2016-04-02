@@ -7,10 +7,10 @@ public final class Track {
     private int id;
     private String title;
     private String artist;
-    private String duration;
+    private int duration;
     private String path;
 
-    public Track(int id,String title,String artist,String duration,String path){
+    public Track(int id,String title,String artist,int duration,String path){
         setId(id);
         setTitle(title);
         setArtist(artist);
@@ -32,11 +32,11 @@ public final class Track {
         this.artist = artist;
     }
 
-    public void setDuration(String duration) {
+    public void setDuration(int duration) {
         this.duration = duration;
     }
 
-    public String getDuration() {
+    public int getDuration() {
         return duration;
     }
 

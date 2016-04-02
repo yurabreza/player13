@@ -22,14 +22,14 @@
         <TextView
             android:id="@+id/twArtistSB"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="24dp"
             android:layout_marginTop="@dimen/default_margin"
             android:text="artist" />
 
         <TextView
             android:id="@+id/twTitle_SB"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="24dp"
             android:layout_marginTop="@dimen/default_margin"
             android:text="Title" />
     </LinearLayout>
