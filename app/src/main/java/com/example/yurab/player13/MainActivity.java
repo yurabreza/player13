@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
@@ -47,6 +48,28 @@ public final class MainActivity extends Activity implements EventHandler, View.O
         bindPlayerService();
 
 
+
+    }
+
+    private void initSeekbar() {
+
+         final Handler mHandler = new Handler();
+        //Make sure you update Seekbar on UI thread
+        MainActivity.this.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                if (playerService.mediaPlayer != null) {
+                    int mCurrentPosition = playerService.mediaPlayer.getCurrentPosition();
+                  //  mCurrentPosition=mCurrentPosition/1000;
+                    seekBar.setProgress(mCurrentPosition);
+                    Log.d("yura",String.valueOf(mCurrentPosition));
+
+                    textView.setText(formatDuration(trackList.get(current).getDuration()-mCurrentPosition));
+                }
+                mHandler.postDelayed(this, 1000);
+            }
+        });
     }
 
     private void initService() {
@@ -175,8 +198,9 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     @Override
     public void play(int id) {
+
         initService();
-        //todo correct duration
+        initSeekbar();
         //setting notification title& artist
         playerService.setSong(trackList.get(id).getTitle(), trackList.get(id).getArtist());
 
@@ -185,7 +209,8 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
         if (playerService.play(id)) {
             setBackground(ibPausePlay, ContextCompat.getDrawable(this, R.drawable.ic_pause));
-
+            seekBar.setMax(playerService.mediaPlayer.getDuration());
+            Log.d("yura",String.valueOf(playerService.mediaPlayer.getDuration()));
         }
     }
 
@@ -259,9 +284,9 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-        //Toast.makeText(this,progress,Toast.LENGTH_LONG).show();
-        playerService.mediaPlayer.seekTo(Integer.valueOf(trackList.get(current).getDuration()) / 100 * progress);
+        if(playerService.mediaPlayer != null && fromUser){
+            playerService.mediaPlayer.seekTo(progress);
+        }
     }
 
     @Override

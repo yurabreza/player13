@@ -17,6 +17,8 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import static com.example.yurab.player13.R.drawable.ic_player1;
+
 /**
  * Created by yurab on 01.04.2016.
  */
@@ -91,14 +93,16 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         views.setTextViewText(R.id.twTitle_SB, title);
 
         views.setTextViewText(R.id.twArtistSB, artist);
-
+//use.getNotification to support api 15
         Notification status;
         status = new Notification.Builder(this).build();
         status.contentView = views;
 
         status.flags = Notification.FLAG_ONGOING_EVENT;
-        status.icon = R.drawable.ic_play;
+        status.icon = ic_player1;
         status.contentIntent = pendingIntent;
+
+
 
         startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
 
