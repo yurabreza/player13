@@ -7,13 +7,13 @@
     android:layout_height="wrap_content"
     android:clickable="true"
 
-    app:cardBackgroundColor="@android:color/tertiary_text_dark"
+    app:cardBackgroundColor="@color/card_view_back"
 
     app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:orientation="horizontal">
         <ImageButton
             android:id="@+id/pausePlay_TCV"
@@ -32,14 +32,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
-                android:hint="Title"/>
+                android:text="Title"
+                android:textColor="#ffffff"/>
 
             <TextView
                 android:id="@+id/twArtist_TCV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
-                android:hint="Artist"/>
+                android:text="Artist"
+                android:textColor="#ffffff"/>
 
 
 
@@ -51,7 +53,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:hint="Duration"/>
+            android:text="Duration"
+            android:textColor="#ffffff"/>
 
 
 

@@ -1,6 +1,8 @@
 package com.example.yurab.player13;
 
+import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -9,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -22,7 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-public final class MainActivity extends AppCompatActivity implements EventHandler,
+public final class MainActivity extends Activity implements EventHandler,
         MediaPlayer.OnPreparedListener, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
     public ArrayList<Track> trackList = new ArrayList<>();
     private ImageButton ibPausePlay, ibForward, inPrevious;
@@ -40,6 +41,7 @@ public final class MainActivity extends AppCompatActivity implements EventHandle
         setContentView(R.layout.activity_main);
         initialize();
         setRecyclerView();
+
     }
 
     private void setRecyclerView() {
@@ -76,6 +78,8 @@ public final class MainActivity extends AppCompatActivity implements EventHandle
         findViewById(R.id.ibfastrewind_AM).setOnClickListener(this);
         ibPausePlay.setOnClickListener(this);
         seekBar.setOnSeekBarChangeListener(this);
+
+        startService(new Intent(this,PlayerService.class));
     }
 
     private String formatDuration(long millis) {
