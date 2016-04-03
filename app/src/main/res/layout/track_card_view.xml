@@ -12,6 +12,7 @@
     app:cardUseCompatPadding="true">
 
     <LinearLayout
+        android:id="@+id/ll_TCV"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal">
@@ -20,7 +21,9 @@
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@android:drawable/ic_media_play" />
+            android:background="@drawable/ic_sound"
+            android:visibility="gone"
+            android:layout_margin="5dp"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -30,31 +33,32 @@
             <TextView
                 android:id="@+id/twTitle_TCV"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
+                android:layout_height="18dp"
+
                 android:text="Title"
                 android:textColor="#ffffff"/>
 
             <TextView
                 android:id="@+id/twArtist_TCV"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
+                android:layout_height="18dp"
+
                 android:text="Artist"
                 android:textColor="#ffffff"/>
 
+            <TextView
+
+                android:id="@+id/twDuration_TCV"
+                android:layout_width="wrap_content"
+                android:layout_height="18dp"
+
+                android:text="Duration"
+                android:textColor="#ffffff"/>
 
 
         </LinearLayout>
 
-        <TextView
-            android:layout_gravity="center"
-            android:id="@+id/twDuration_TCV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="Duration"
-            android:textColor="#ffffff"/>
+
 
 
 

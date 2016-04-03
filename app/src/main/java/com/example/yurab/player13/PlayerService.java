@@ -3,7 +3,6 @@ package com.example.yurab.player13;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -12,7 +11,6 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,9 +25,9 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public ArrayList<Track> trackList = new ArrayList<>();
     public MediaPlayer mediaPlayer;
     public int current;
-    Context context;
-    MyBinder binder = new MyBinder();
-    RemoteViews views;
+
+    private MyBinder binder = new MyBinder();
+    private RemoteViews views;
 
 
     @Nullable
@@ -59,14 +57,15 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        showNotification("-", "-");
+        showNotification("title", "artist");
 
 
         if (intent.getAction() != null && intent.getAction().equals(
                 Constants.ACTION.STOPFOREGROUND_ACTION)) {
             Log.i(LOG_TAG, "Received Stop Foreground Intent");
-            Toast.makeText(this, "Service Stopped", Toast.LENGTH_SHORT).show();
+         //  System.exit(0);
+
+
 
             stopForeground(true);
             stopSelf();
@@ -79,23 +78,24 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                 R.layout.status_bar);
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
+                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
         Intent closeIntent = new Intent(this, PlayerService.class);
         closeIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
         PendingIntent pcloseIntent = PendingIntent.getService(this, 0,
                 closeIntent, 0);
+
         views.setOnClickPendingIntent(R.id.imgBtn_close_SB, pcloseIntent);
 
         views.setTextViewText(R.id.twTitle_SB, title);
 
         views.setTextViewText(R.id.twArtistSB, artist);
-//use.getNotification to support api 15
-        Notification status;
-        status = new Notification.Builder(this).build();
+
+        Notification status = buildNotif();
+
         status.contentView = views;
 
         status.flags = Notification.FLAG_ONGOING_EVENT;
@@ -103,14 +103,23 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         status.contentIntent = pendingIntent;
 
 
-
         startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
 
 
     }
 
+    private Notification buildNotif() {
+        int sdk = android.os.Build.VERSION.SDK_INT;
+        if (sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            return new Notification.Builder(this).getNotification();
+        } else {
+            return new Notification.Builder(this).build();
+        }
+
+    }
+
     public void setSong(String title, String artist) {
-        //todo make correct notification update
+
         showNotification(title, artist);
 
     }

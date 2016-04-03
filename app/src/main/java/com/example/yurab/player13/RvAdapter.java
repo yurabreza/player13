@@ -77,6 +77,7 @@ public final class RvAdapter extends RecyclerView.Adapter<RvAdapter.myViewHolder
             duration = (TextView) itemView.findViewById(R.id.twDuration_TCV);
             pausePlay = (ImageButton) itemView.findViewById(R.id.pausePlay_TCV);
 
+
             cardView = (CardView) itemView.findViewById(R.id.cardView);
             //Attaching listener
             cardView.setOnClickListener(this);
@@ -94,5 +95,7 @@ public final class RvAdapter extends RecyclerView.Adapter<RvAdapter.myViewHolder
 
 
         }
+
+
     }
 }

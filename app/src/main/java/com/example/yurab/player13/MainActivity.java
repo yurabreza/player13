@@ -7,7 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,41 +19,50 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-public final class MainActivity extends Activity implements EventHandler, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+public final class MainActivity extends Activity implements EventHandler, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
     public ArrayList<Track> trackList = new ArrayList<>();
-    private ImageButton ibPausePlay, ibForward, inPrevious;
+    private ImageButton ibPausePlay;
     private TextView textView;
     private SeekBar seekBar;
-    //   private MediaPlayer mediaPlayer;
+
     private int length;
-    private AudioManager am;
+
     private int current;
     private Intent intent;
     private ServiceConnection sConn;
     private PlayerService playerService;
     private boolean bound = false;
+    private LinearLayoutManager linearLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         initialize();
         setRecyclerView();
         bindPlayerService();
 
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
     }
 
     private void initSeekbar() {
 
-         final Handler mHandler = new Handler();
+        final Handler mHandler = new Handler();
         //Make sure you update Seekbar on UI thread
         MainActivity.this.runOnUiThread(new Runnable() {
 
@@ -61,11 +70,11 @@ public final class MainActivity extends Activity implements EventHandler, View.O
             public void run() {
                 if (playerService.mediaPlayer != null) {
                     int mCurrentPosition = playerService.mediaPlayer.getCurrentPosition();
-                  //  mCurrentPosition=mCurrentPosition/1000;
+                    //  mCurrentPosition=mCurrentPosition/1000;
                     seekBar.setProgress(mCurrentPosition);
-                    Log.d("yura",String.valueOf(mCurrentPosition));
+                    //Log.d("yura", String.valueOf(mCurrentPosition));
 
-                    textView.setText(formatDuration(trackList.get(current).getDuration()-mCurrentPosition));
+                    textView.setText(formatDuration(trackList.get(current).getDuration() - mCurrentPosition));
                 }
                 mHandler.postDelayed(this, 1000);
             }
@@ -115,17 +124,56 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
         //Creating RecyclerView adapter and putting to it data
         //by loading sort settings from SharedPreferences
-        // todo: save shared prefs
+
         RvAdapter adapter = new RvAdapter(this, trackList);
 
         //setting adapter
         recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        linearLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(linearLayoutManager);
+
+
+    }
+
+    private void setRecyclerViewPlaying(int position) {
+        int wantedPosition = position;
+        int firstPosition = linearLayoutManager.findFirstVisibleItemPosition();
+        int wantedChild = wantedPosition - firstPosition;
+
+        if (wantedChild < 0 || wantedChild >= linearLayoutManager.getChildCount()) {
+            Log.w("Yura", "Unable to get view for desired position, because it's not being displayed on screen.");
+            return;
+        }
+
+        View wantedView = linearLayoutManager.getChildAt(wantedChild);
+        ImageView imageButton = (ImageView) wantedView.findViewById(R.id.pausePlay_TCV);
+
+        imageButton.setVisibility(View.VISIBLE);
+
+
+    }
+
+    private void setRecyclerViewNotPlaying(int position) {
+        int wantedPosition = position; // Whatever position you're looking for
+        int firstPosition = linearLayoutManager.findFirstVisibleItemPosition(); // This is the same as child #0
+        int wantedChild = wantedPosition - firstPosition;
+
+        if (wantedChild < 0 || wantedChild >= linearLayoutManager.getChildCount()) {
+            Log.w("Yura", "Unable to get view for desired position, because it's not being displayed on screen.");
+            return;
+        }
+
+        View wantedView = linearLayoutManager.getChildAt(wantedChild);
+        ImageView imageButton = (ImageView) wantedView.findViewById(R.id.pausePlay_TCV);
+
+        imageButton.setVisibility(View.GONE);
+
+
     }
 
     private void initialize() {
 
-        am = (AudioManager) getSystemService(AUDIO_SERVICE);
+
         length = 0;
 
         //get track list
@@ -198,7 +246,10 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     @Override
     public void play(int id) {
-
+        checkService();
+        if (playerService.mediaPlayer != null)
+            setRecyclerViewNotPlaying(current);
+        setRecyclerViewPlaying(id);
         initService();
         initSeekbar();
         //setting notification title& artist
@@ -210,8 +261,14 @@ public final class MainActivity extends Activity implements EventHandler, View.O
         if (playerService.play(id)) {
             setBackground(ibPausePlay, ContextCompat.getDrawable(this, R.drawable.ic_pause));
             seekBar.setMax(playerService.mediaPlayer.getDuration());
-            Log.d("yura",String.valueOf(playerService.mediaPlayer.getDuration()));
+            playerService.mediaPlayer.setOnCompletionListener(this);
+            Log.d("yura", String.valueOf(playerService.mediaPlayer.getDuration()));
         }
+    }
+
+    private void checkService() {
+        if (playerService!=null)
+            Log.d("yura","Service check");
     }
 
 
@@ -245,7 +302,7 @@ public final class MainActivity extends Activity implements EventHandler, View.O
     }
 
 
-    private void setBackground(ImageButton ibPausePlay, Drawable drawable) {
+    private void setBackground(View ibPausePlay, Drawable drawable) {
         int sdk = android.os.Build.VERSION.SDK_INT;
         if (sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
             ibPausePlay.setBackgroundDrawable(drawable);
@@ -284,7 +341,8 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if(playerService.mediaPlayer != null && fromUser){
+
+        if (playerService.mediaPlayer != null && fromUser) {
             playerService.mediaPlayer.seekTo(progress);
         }
     }
@@ -306,9 +364,10 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     }
 
-//    @Override
-//    public void onCompletion(MediaPlayer mp) {
-//
-//        textView.setText(formatDuration(trackList.get(playerService.next()).getDuration()));
-//    }
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        play(playerService.next());
+    }
+
+
 }
