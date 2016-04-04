@@ -1,10 +1,14 @@
 package com.example.yurab.player13;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
@@ -29,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 public final class MainActivity extends Activity implements EventHandler, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
     public ArrayList<Track> trackList = new ArrayList<>();
     private ImageButton ibPausePlay;
-    private TextView textView;
+    private TextView textViewDuration;
     private SeekBar seekBar;
 
     private int length;
@@ -40,6 +44,8 @@ public final class MainActivity extends Activity implements EventHandler, View.O
     private PlayerService playerService;
     private boolean bound = false;
     private LinearLayoutManager linearLayoutManager;
+    private BroadcastReceiver receive;
+    private SharedPreferences sPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +58,21 @@ public final class MainActivity extends Activity implements EventHandler, View.O
         bindPlayerService();
 
 
+        receive = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                unbindService(sConn);
+                finish();
+            }
+        };
+
+        IntentFilter filter = new IntentFilter("KILL");
+        this.registerReceiver(receive, filter);
     }
+
+
+
 
     @Override
     protected void onResume() {
@@ -70,11 +90,11 @@ public final class MainActivity extends Activity implements EventHandler, View.O
             public void run() {
                 if (playerService.mediaPlayer != null) {
                     int mCurrentPosition = playerService.mediaPlayer.getCurrentPosition();
-                    //  mCurrentPosition=mCurrentPosition/1000;
-                    seekBar.setProgress(mCurrentPosition);
-                    //Log.d("yura", String.valueOf(mCurrentPosition));
 
-                    textView.setText(formatDuration(trackList.get(current).getDuration() - mCurrentPosition));
+                    seekBar.setProgress(mCurrentPosition);
+
+
+                    textViewDuration.setText(formatDuration(trackList.get(current).getDuration() - mCurrentPosition));
                 }
                 mHandler.postDelayed(this, 1000);
             }
@@ -182,7 +202,7 @@ public final class MainActivity extends Activity implements EventHandler, View.O
         //init
         seekBar = (SeekBar) findViewById((R.id.seekBar_AM));
         ibPausePlay = (ImageButton) findViewById(R.id.ibPausePlay_AM);
-        textView = (TextView) findViewById(R.id.twCurTime_AM);
+        textViewDuration = (TextView) findViewById(R.id.twCurTime_AM);
 
         //attaching listeners
         findViewById(R.id.ibNext_AM).setOnClickListener(this);
@@ -246,7 +266,7 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     @Override
     public void play(int id) {
-        checkService();
+
         if (playerService.mediaPlayer != null)
             setRecyclerViewNotPlaying(current);
         setRecyclerViewPlaying(id);
@@ -254,8 +274,8 @@ public final class MainActivity extends Activity implements EventHandler, View.O
         initSeekbar();
         //setting notification title& artist
         playerService.setSong(trackList.get(id).getTitle(), trackList.get(id).getArtist());
-
-        textView.setText(formatDuration(trackList.get(id).getDuration()));
+        Log.d("Yura", "play" + trackList.get(id).getTitle());
+        textViewDuration.setText(formatDuration(trackList.get(id).getDuration()));
         current = id;
 
         if (playerService.play(id)) {
@@ -263,12 +283,8 @@ public final class MainActivity extends Activity implements EventHandler, View.O
             seekBar.setMax(playerService.mediaPlayer.getDuration());
             playerService.mediaPlayer.setOnCompletionListener(this);
             Log.d("yura", String.valueOf(playerService.mediaPlayer.getDuration()));
-        }
-    }
 
-    private void checkService() {
-        if (playerService!=null)
-            Log.d("yura","Service check");
+        }
     }
 
 
@@ -359,9 +375,9 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
-
+        this.unregisterReceiver(receive);
     }
 
     @Override

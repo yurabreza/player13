@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -25,9 +26,11 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public ArrayList<Track> trackList = new ArrayList<>();
     public MediaPlayer mediaPlayer;
     public int current;
-
+    public boolean serviceOn = true;
     private MyBinder binder = new MyBinder();
     private RemoteViews views;
+    private SharedPreferences sPref;
+
 
 
     @Nullable
@@ -57,18 +60,23 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        showNotification("title", "artist");
+
+            showNotification("title", "artist");
 
 
         if (intent.getAction() != null && intent.getAction().equals(
                 Constants.ACTION.STOPFOREGROUND_ACTION)) {
             Log.i(LOG_TAG, "Received Stop Foreground Intent");
-         //  System.exit(0);
 
 
 
             stopForeground(true);
+
             stopSelf();
+
+            Intent in = new Intent("KILL");
+            sendBroadcast(in);
+
         }
         return START_STICKY;
     }
@@ -91,7 +99,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         views.setOnClickPendingIntent(R.id.imgBtn_close_SB, pcloseIntent);
 
         views.setTextViewText(R.id.twTitle_SB, title);
-
+        Log.d("Yura", "setSong build not " + title);
         views.setTextViewText(R.id.twArtistSB, artist);
 
         Notification status = buildNotif();
@@ -118,9 +126,10 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     }
 
-    public void setSong(String title, String artist) {
+    public void setSong(String _title, String _artist) {
 
-        showNotification(title, artist);
+        showNotification(_title, _artist);
+
 
     }
 
@@ -144,6 +153,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public boolean play(int id) {
         current = id;
         releaseMP();
+
         try {
             //create mediaPlayer
             mediaPlayer = new MediaPlayer();
