@@ -20,7 +20,7 @@ import static com.example.yurab.player13.R.drawable.ic_player1;
 /**
  * Created by yurab on 01.04.2016.
  */
-public class PlayerService extends Service implements MediaPlayer.OnCompletionListener {
+public final class PlayerService extends Service implements MediaPlayer.OnCompletionListener {
     private String LOG_TAG = "Yura";
     public ArrayList<Track> trackList = new ArrayList<>();
     public MediaPlayer mediaPlayer;

@@ -1,7 +1,7 @@
 package com.example.yurab.player13;
 
 
-public class Constants {
+public final class Constants {
     public interface ACTION {
         public static String KILL = "KILL";
 
