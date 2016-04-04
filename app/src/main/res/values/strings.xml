@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">player13</string>
+    <string name="title">title</string>
+    <string name="artist">artist</string>
 </resources>

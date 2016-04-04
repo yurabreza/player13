@@ -67,11 +67,9 @@ public final class MainActivity extends Activity implements EventHandler, View.O
             }
         };
 
-        IntentFilter filter = new IntentFilter("KILL");
+        IntentFilter filter = new IntentFilter(Constants.ACTION.KILL);
         this.registerReceiver(receive, filter);
     }
-
-
 
 
     @Override
@@ -157,6 +155,8 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     private void setRecyclerViewPlaying(int position) {
         int wantedPosition = position;
+
+
         int firstPosition = linearLayoutManager.findFirstVisibleItemPosition();
         int wantedChild = wantedPosition - firstPosition;
 
@@ -169,13 +169,13 @@ public final class MainActivity extends Activity implements EventHandler, View.O
         ImageView imageButton = (ImageView) wantedView.findViewById(R.id.pausePlay_TCV);
 
         imageButton.setVisibility(View.VISIBLE);
-
+        linearLayoutManager.scrollToPosition(position);
 
     }
 
     private void setRecyclerViewNotPlaying(int position) {
         int wantedPosition = position; // Whatever position you're looking for
-        int firstPosition = linearLayoutManager.findFirstVisibleItemPosition(); // This is the same as child #0
+        int firstPosition = linearLayoutManager.findFirstVisibleItemPosition();
         int wantedChild = wantedPosition - firstPosition;
 
         if (wantedChild < 0 || wantedChild >= linearLayoutManager.getChildCount()) {
@@ -261,6 +261,7 @@ public final class MainActivity extends Activity implements EventHandler, View.O
                 Log.d("Yura", ".process entry..." + String.valueOf(counter));
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return trackList1;
     }
 

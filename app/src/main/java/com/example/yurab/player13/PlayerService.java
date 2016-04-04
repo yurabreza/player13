@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -26,17 +25,17 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public ArrayList<Track> trackList = new ArrayList<>();
     public MediaPlayer mediaPlayer;
     public int current;
-    public boolean serviceOn = true;
+
     private MyBinder binder = new MyBinder();
     private RemoteViews views;
-    private SharedPreferences sPref;
+
 
 
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d("Yura", "MyService onBind");
+
         return binder;
     }
 
@@ -61,7 +60,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-            showNotification("title", "artist");
+            showNotification(getString(R.string.title), getString(R.string.artist));
 
 
         if (intent.getAction() != null && intent.getAction().equals(
@@ -74,7 +73,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
             stopSelf();
 
-            Intent in = new Intent("KILL");
+            Intent in = new Intent(Constants.ACTION.KILL);
             sendBroadcast(in);
 
         }
@@ -99,7 +98,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         views.setOnClickPendingIntent(R.id.imgBtn_close_SB, pcloseIntent);
 
         views.setTextViewText(R.id.twTitle_SB, title);
-        Log.d("Yura", "setSong build not " + title);
+
         views.setTextViewText(R.id.twArtistSB, artist);
 
         Notification status = buildNotif();
