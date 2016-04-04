@@ -60,17 +60,10 @@ public final class PlayerService extends Service implements MediaPlayer.OnComple
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-            showNotification(getString(R.string.title), getString(R.string.artist));
-
-
         if (intent.getAction() != null && intent.getAction().equals(
                 Constants.ACTION.STOPFOREGROUND_ACTION)) {
             Log.i(LOG_TAG, "Received Stop Foreground Intent");
-
-
-
             stopForeground(true);
-
             stopSelf();
 
             Intent in = new Intent(Constants.ACTION.KILL);
@@ -81,10 +74,10 @@ public final class PlayerService extends Service implements MediaPlayer.OnComple
     }
 
     private void showNotification(String title, String artist) {
-        views = new RemoteViews(getPackageName(),
-                R.layout.status_bar);
+        views = new RemoteViews(getPackageName(), R.layout.status_bar);
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
         notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
                 notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);

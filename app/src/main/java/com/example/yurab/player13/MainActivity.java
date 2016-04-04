@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
@@ -45,7 +44,7 @@ public final class MainActivity extends Activity implements EventHandler, View.O
     private boolean bound = false;
     private LinearLayoutManager linearLayoutManager;
     private BroadcastReceiver receive;
-    private SharedPreferences sPref;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,8 +154,6 @@ public final class MainActivity extends Activity implements EventHandler, View.O
 
     private void setRecyclerViewPlaying(int position) {
         int wantedPosition = position;
-
-
         int firstPosition = linearLayoutManager.findFirstVisibleItemPosition();
         int wantedChild = wantedPosition - firstPosition;
 
@@ -192,8 +189,6 @@ public final class MainActivity extends Activity implements EventHandler, View.O
     }
 
     private void initialize() {
-
-
         length = 0;
 
         //get track list
